@@ -95,7 +95,7 @@ export default function Navbar() {
       }`}>
       <div className="flex items-center justify-between">
         <a href="/" className="text-2xl font-bold text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors cursor-pointer">
-          AutoBlog
+          thinkScope
         </a>
 
         {/* Desktop search bar */}
