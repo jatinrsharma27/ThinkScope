@@ -49,7 +49,7 @@ export default function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthM
             {mode === 'signin' ? 'Sign In' : 'Sign Up'}
           </h2>
           <p className="mt-2 text-gray-600">
-            {mode === 'signin' ? 'Welcome back to AutoBlog' : 'Create your AutoBlog account'}
+            {mode === 'signin' ? 'Welcome Back To ThinkScope' : 'Create Your ThinkScope Account'}
           </p>
         </div>
         

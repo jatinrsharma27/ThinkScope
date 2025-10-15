@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AutoBlog",
-  description: "A simple blog homepage",
+  title: "ThinkScope",
+  description: "AI-Powered Blogging Platform",
 };
 
 export default function RootLayout({
