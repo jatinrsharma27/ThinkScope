@@ -154,8 +154,8 @@ export default function Navbar() {
             <button
               onClick={() => setAuthModal({ isOpen: true, mode: 'signin' })}
               className={`px-4 py-2 text-white rounded-md text-sm font-medium transition-all duration-300 ${isScrolled
-                  ? 'bg-blue-600/90 backdrop-blur-md hover:bg-blue-700/90'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  ? 'bg-gray-800/90 backdrop-blur-md hover:bg-gray-700/90'
+                  : 'bg-gray-800 hover:bg-gray-700'
                 }`}
             >
               Sign In
