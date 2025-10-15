@@ -33,7 +33,8 @@ export default function CategoriesBar({ selectedCategory = 'All', onCategorySele
           .eq('user_id', session.user.id);
         
         if (data && data.length > 0) {
-          setCategories(['All', ...data.map(item => item.category)]);
+          const sortedCategories = data.map(item => item.category).sort();
+          setCategories(['All', ...sortedCategories]);
         } else {
           setCategories(['All', ...ALL_CATEGORIES]);
         }
