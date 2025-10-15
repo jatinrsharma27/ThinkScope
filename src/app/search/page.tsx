@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
 import Navbar from '../../components/Navbar';
 import CategoriesBar from '../../components/CategoriesBar';
 
-export default function SearchResults() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const [results, setResults] = useState<any[]>([]);
@@ -92,7 +92,6 @@ export default function SearchResults() {
 
   return (
     <>
-      <Navbar />
       <CategoriesBar selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} />
       <div className="max-w-6xl mx-auto p-6 text-gray-900 dark:text-white">
         <header className="mb-8">
@@ -153,6 +152,21 @@ export default function SearchResults() {
           )}
         </main>
       </div>
+    </>
+  );
+}
+
+export default function SearchResults() {
+  return (
+    <>
+      <Navbar />
+      <Suspense fallback={
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="text-center">Loading search...</div>
+        </div>
+      }>
+        <SearchContent />
+      </Suspense>
     </>
   );
 }
