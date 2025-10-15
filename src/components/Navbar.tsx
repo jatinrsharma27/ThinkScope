@@ -13,6 +13,7 @@ export default function Navbar() {
   const [userProfile, setUserProfile] = useState<{ full_name: string | null } | null>(null);
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'signin' | 'signup' }>({ isOpen: false, mode: 'signin' });
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     const theme = localStorage.getItem('theme');
@@ -34,6 +35,14 @@ export default function Navbar() {
     };
 
     window.addEventListener('scroll', handleScroll);
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.relative')) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
 
     // Check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -72,6 +81,7 @@ export default function Navbar() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('theme-changed', handleThemeChange);
+      document.removeEventListener('mousedown', handleClickOutside);
       subscription.unsubscribe();
     };
   }, []);
@@ -122,13 +132,17 @@ export default function Navbar() {
 
           {isLoggedIn ? (
             /* Profile circle when logged in */
-            <div className="relative group">
-              <div className="w-8 h-8 bg-gray-800 rounded-full cursor-pointer flex items-center justify-center">
+            <div className="relative">
+              <div 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-8 h-8 bg-gray-800 rounded-full cursor-pointer flex items-center justify-center"
+              >
                 <span className="text-white text-sm font-medium">
                   {userProfile?.full_name ? userProfile.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg">
                 <div className="py-1">
                   <div className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600">
                     <div className="font-medium">{userProfile?.full_name || 'User'}</div>
@@ -147,7 +161,8 @@ export default function Navbar() {
                     Log out
                   </button>
                 </div>
-              </div>
+                </div>
+              )}
             </div>
           ) : (
             /* Sign in button when not logged in */
