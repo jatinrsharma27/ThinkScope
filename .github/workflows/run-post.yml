@@ -28,7 +28,6 @@ jobs:
           npm i puppeteer node-fetch@2
       - name: Run post generator
         env:
-          # Map DeepSeek secret into both names so script works either way
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           ADMIN_URL: ${{ secrets.ADMIN_URL }}
@@ -37,6 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node post-generator.js
+
 
 
       - name: Commit updated state & log (if changed)
