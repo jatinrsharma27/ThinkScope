@@ -4,7 +4,7 @@
  * Usage: node post-generator.js
  *
  * Environment variables (set these in GitHub secrets):
- * - OPENAI_API_KEY (required)
+ * - GROK_API_KEY: (required)
  * - ADMIN_URL (optional, default https://thinkscope.netlify.app/admin)
  * - ADMIN_USERNAME (optional)
  * - ADMIN_PASSWORD (optional)
@@ -22,13 +22,13 @@ const CATEGORIES_FILE = path.join(REPO_ROOT, "categories.json");
 const STATE_FILE = path.join(REPO_ROOT, "state.json");
 const LOG_FILE = path.join(REPO_ROOT, "posts_log.csv");
 
-const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const GROK_KEY = process.env.GROK_API_KEY;
 const ADMIN_URL = process.env.ADMIN_URL || "https://thinkscope.netlify.app/admin";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
-if (!OPENAI_KEY) {
-  console.error("OPENAI_API_KEY missing. Set it in environment variables.");
+if (!GROK_KEY) {
+  console.error("GROK_API_KEY missing. Set it in environment variables.");
   process.exit(1);
 }
 
@@ -57,47 +57,63 @@ function escapeCsv(s) {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
+// ------------------ replace generatePost with this ------------------
 async function generatePost(category) {
   const prompt = `You are a helpful blog writer. Produce a single JSON response (no extra text) with keys:
 "title": short catchy title (6-10 words),
 "content_html": the blog content as HTML (approx 450-600 words, with paragraphs and 2-3 subheadings),
 "meta_description": 120-150 characters.
-Write a post for the category: ${category}. Use simple language and end with 2-3 bullet takeaways (use <ul><li>) inside content_html.`;
-  
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",   // you may change the model name
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1200,
-      temperature: 0.7
-    })
-  });
+Write a post for the category: ${category}. Use simple language and end with 2-3 bullet takeaways (use <ul><li>) inside content_html. Return only JSON and nothing else.`;
 
-  const j = await res.json();
-  if (!j.choices || !j.choices[0]) throw new Error("OpenAI returned no choices: " + JSON.stringify(j));
-  // The assistant reply might include surrounding text — try to parse JSON out of it.
-  const raw = j.choices[0].message.content;
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (err) {
-    // Try to extract JSON substring
-    const first = raw.indexOf("{");
-    const last = raw.lastIndexOf("}");
-    if (first !== -1 && last !== -1) {
-      const sub = raw.slice(first, last + 1);
-      parsed = JSON.parse(sub);
-    } else {
-      throw new Error("Failed to parse JSON from OpenAI response: " + raw);
+  // Detect keys and print which one we will use (helpful for debugging in Actions logs)
+  const GROK_KEY = process.env.GROK_API_KEY;
+  console.log("DEBUG: GROK_KEY present?", !!GROK_KEY);
+
+  if (GROK_KEY) {
+    console.log("DEBUG: Using Grok API");
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROK_KEY}`
+      },
+      body: JSON.stringify({
+        model: "grok-chat",
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 1200,
+        temperature: 0.7,
+        stream: false
+      })
+    });
+
+    const j = await res.json();
+    if (!j.choices || !j.choices[0]) {
+      throw new Error("Grok returned no choices: " + JSON.stringify(j));
     }
+    const raw = j.choices[0].message.content;
+    // Try strict JSON parse, fallback to substring extraction
+    try {
+      return JSON.parse(raw);
+    } catch (err) {
+      const first = raw.indexOf("{");
+      const last = raw.lastIndexOf("}");
+      if (first !== -1 && last !== -1) {
+        const sub = raw.slice(first, last + 1);
+        return JSON.parse(sub);
+      }
+      throw new Error("Failed to parse JSON from Grok response: " + raw);
+    }
+  } else {
+    throw new Error("No Grok_API_KEY found in environment");
   }
-  return parsed;
 }
+// -------------------------------------------------------------------
+
+
+
 
 async function run() {
   // Read categories and state
